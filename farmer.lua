@@ -64987,6 +64987,25 @@ local function createNativeLibrary()
             end
             uiPage:Header("My configs", "Left")
             local dropdownResult
+            local autoloadButton
+            local function refreshAutoloadButton()
+                if not autoloadButton then
+                    return
+                end
+                local value = callback5(default)
+                local text = value and value.autoload == true and "Autoload: on" or "Set as autoload"
+                pcall(function()
+                    if autoloadButton.SetText then
+                        autoloadButton:SetText(text)
+                        return
+                    end
+                    local content = autoloadButton:FindFirstChild("Content")
+                    local labelFrame = content and content:FindFirstChildWhichIsA("TextLabel")
+                    if labelFrame then
+                        labelFrame.Text = text
+                    end
+                end)
+            end
             pcall(function()
                 local uiPage2 = uiPage:LastSection()
                 dropdownResult = uiPage2:Dropdown({
@@ -64996,6 +65015,7 @@ local function createNativeLibrary()
                     Placeholder = localization.tr("No configs yet"),
                     Callback = function(argument)
                         default = argument
+                        refreshAutoloadButton()
                     end,
                 })
                 localization.bind(dropdownResult.Title, "Config")
@@ -65041,6 +65061,30 @@ local function createNativeLibrary()
                     callback2("Config applied", tostring(value.name), "success")
                 end,
             })
+            autoloadButton = uiPage:Button({
+                Text = "Set as autoload",
+                Tooltip = "Applied automatically every time the script launches",
+                Callback = function()
+                    local value = callback5(default)
+                    if not value then
+                        callback2("Config not found", nil, "danger")
+                        return
+                    end
+                    local clearing = value.autoload == true
+                    for _, item in ipairs(value2) do
+                        item.autoload = nil
+                    end
+                    value.autoload = not clearing
+                    argument2.saveList(value2)
+                    refreshAutoloadButton()
+                    callback2(
+                        clearing and "Autoload removed" or "Autoload set",
+                        tostring(value.name),
+                        clearing and "warning" or "success"
+                    )
+                end,
+            })
+            refreshAutoloadButton()
             uiPage:Button({
                 Text = "Save current",
                 Callback = function()
@@ -116160,10 +116204,13 @@ local function createNativeLibrary()
                                 end)
                             else
                                 argument:_endScaling()
-                                argument.Scale.Scale = scale
+                                argument.Scale.Scale = scale * 0.94
                                 argument:_syncLayers()
+                                argument.Root.Position = position + UDim2.fromOffset(0, 18)
                                 argument.Root.Visible = true
                                 argument.FloatLayer.Visible = true
+                                argument.GenieScale = tweenInstance(argument.Scale, "PopSmall", { Scale = scale })
+                                argument.GeniePos = tweenInstance(argument.Root, "PopSmall", { Position = position })
                             end
                             if argument.WindowShadow then
                                 argument.WindowShadow.ImageTransparency = 1
@@ -116226,6 +116273,14 @@ local function createNativeLibrary()
                                     end)
                                 end
                             else
+                                argument.Scaling = true
+                                argument.GenieScale = tweenInstance(argument.Scale, "Exit", { Scale = scale * 0.96 })
+                                argument.GeniePos = tweenInstance(
+                                    argument.Root,
+                                    "Exit",
+                                    { Position = argument.Root.Position + UDim2.fromOffset(0, 14) }
+                                )
+                                calculatedValue = 0.18
                             end
                             if argument.WindowShadow then
                                 tweenInstance(argument.WindowShadow, "Exit", { ImageTransparency = 1 })
@@ -122018,7 +122073,7 @@ local function createNativeLibrary()
                                     end
                                 end
                                 local popupWidth = 300
-                                local popupShell, popupBody, popupHeight = nil, nil, 0
+                                local popupShell, popupBody, popupPopScale, popupHeight = nil, nil, nil, 0
                                 local function sizePopup()
                                     if not popupShell or not popupShell.Parent then
                                         return
@@ -122039,17 +122094,24 @@ local function createNativeLibrary()
                                     if not popupShell then
                                         return
                                     end
-                                    local shell, body = popupShell, popupBody
-                                    popupShell, popupBody, popupHeight = nil, nil, 0
+                                    local shell, body, popScale = popupShell, popupBody, popupPopScale
+                                    popupShell, popupBody, popupPopScale, popupHeight = nil, nil, nil, 0
                                     enabled2 = false
                                     parent.Size = UDim2.new(1, -indent, 0, 0)
                                     parent.Position = UDim2.fromOffset(indent, 0)
                                     parent.Parent = drawerFrame
-                                    window:PopupConceal(shell, body)
+                                    if popScale then
+                                        tweenInstance(popScale, "Exit", { Scale = 0.9 })
+                                    end
+                                    tweenInstance(body, "Exit", { GroupTransparency = 1 })
+                                    local concealShadow = shell:FindFirstChild("Shadow")
+                                    if concealShadow then
+                                        tweenInstance(concealShadow, "Exit", { ImageTransparency = 1 })
+                                    end
                                     if window.SettingsPopup == closeSettings then
                                         window.SettingsPopup = nil
                                     end
-                                    task.delay(0.18, function()
+                                    task.delay(0.2, function()
                                         shell:Destroy()
                                     end)
                                     callback4(false)
@@ -122105,9 +122167,17 @@ local function createNativeLibrary()
                                     parent.Position = UDim2.fromOffset(14, 34)
                                     parent.Size = UDim2.new(0, popupWidth - 28, 0, 0)
                                     parent.Parent = body
-                                    popupShell, popupBody, popupHeight = shell, body, 0
+                                    popupShell, popupBody, popupPopScale, popupHeight = shell, body, popScale, 0
                                     enabled2 = true
-                                    window:PopupReveal(shell, body, popScale, flip == 1)
+                                    body.GroupTransparency = 1
+                                    popScale.Scale = 0.88
+                                    tweenInstance(body, "Quick", { GroupTransparency = 0 })
+                                    tweenInstance(popScale, "PopSmall", { Scale = 1 })
+                                    local revealShadow = shell:FindFirstChild("Shadow")
+                                    if revealShadow then
+                                        revealShadow.ImageTransparency = 1
+                                        tweenInstance(revealShadow, "Quick", { ImageTransparency = 0.4 })
+                                    end
                                     -- deliberately not registered with OpenPopup: the settings
                                     -- drawer has to survive dropdowns, colour pickers and every
                                     -- control the user presses inside the page
@@ -162411,6 +162481,49 @@ local function createRecoveredBootstrap()
             end
             return { v = 1, game = "mm2", s = serial(cfg), u = serial(uiValues) }
         end
+        -- Feature controls and apply-hooks only exist once that feature's page has
+        -- been built, and pages are built lazily the first time their tab is opened.
+        -- Build every page a config can reach before pushing values, otherwise an
+        -- applied config stays inert until the user clicks through each tab.
+        local function runApplyHooks()
+            for _, callback in ipairs(prefs.applyHooks) do
+                guard(callback, "Configuration")(cfg)
+            end
+        end
+        local function buildPendingPages()
+            if not M.Alive or M.Load == nil then
+                return 0
+            end
+            local ids, seen, pending = {}, {}, 0
+            for _, list in pairs(referenceLayout.pageModules) do
+                if type(list) == "table" then
+                    for _, id in ipairs(list) do
+                        id = tostring(id)
+                        if not seen[id] then
+                            seen[id] = true
+                            ids[#ids + 1] = id
+                        end
+                    end
+                end
+            end
+            for _, id in ipairs(ids) do
+                local module = M.Modules and M.Modules[id]
+                if module and module.State ~= "Initialized" and module.State ~= "Partial" then
+                    pending += 1
+                    pcall(M.Load, id)
+                end
+            end
+            if pending > 0 then
+                -- a page still initializing on another thread registers its hooks there,
+                -- so re-run once after it lands
+                task.delay(0.4, function()
+                    if M.Alive then
+                        runApplyHooks()
+                    end
+                end)
+            end
+            return pending
+        end
         configApi.applyData = function(data)
             if type(data) ~= "table" or type(data.s) ~= "table" then
                 return false, "Invalid configuration data"
@@ -162423,6 +162536,7 @@ local function createRecoveredBootstrap()
                     values = deepCopy(initialValues)
                     table.clear(savedValues)
                 end
+                buildPendingPages()
                 for key, value in pairs(values or {}) do
                     if type(setters[key]) == "function" then
                         guard(setters[key], "Configuration control")(value)
@@ -162430,9 +162544,7 @@ local function createRecoveredBootstrap()
                         savedValues[key] = value
                     end
                 end
-                for _, callback in ipairs(prefs.applyHooks) do
-                    guard(callback, "Configuration")(cfg)
-                end
+                runApplyHooks()
             end)
             prefs.applying = false
             if not ok then
@@ -164067,6 +164179,26 @@ local function createRecoveredBootstrap()
         if type(window.SelectTab) == "function" then
             window:SelectTab(shared.NovaTabs.Murderer)
         end
+        task.delay(1, function()
+            if not M.Alive then
+                return
+            end
+            local ok, list = pcall(configApi.loadList)
+            if not ok or type(list) ~= "table" then
+                return
+            end
+            for _, entry in ipairs(list) do
+                if type(entry) == "table" and entry.autoload == true then
+                    local applied, reason = configApi.applyData(entry.data)
+                    if applied then
+                        M.Status("Autoload config: " .. tostring(entry.name))
+                    else
+                        M.Status("Autoload config failed: " .. tostring(reason or entry.name))
+                    end
+                    return
+                end
+            end
+        end)
         task.defer(function()
             if M.Alive and M.Online then
                 M.ReconnectOnline(true)
