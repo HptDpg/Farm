@@ -52642,257 +52642,6 @@ local function createNativeLibrary()
                     settings.sheriff.gunEsp = gunEsp
                 end,
             })
-            uiPage:Group({ Title = "ESP Presets", Side = "Right" })
-            do
-                local nv = entries.NV
-                local mainWindow, presetTiles =
-                    sharedState.W,
-                    {
-                        order = {
-                            "Prime",
-                            "Box",
-                            "Glow Box",
-                            "Corners",
-                            "Outline",
-                            "Flat",
-                            "Shaded",
-                            "Metallic",
-                            "Chrome",
-                            "Glass",
-                            "Crystal",
-                            "Bubble",
-                            "Glow",
-                            "Neon Rim",
-                            "Animated",
-                            "Pulse",
-                            "Wireframe",
-                            "Lava",
-                            "Skeleton",
-                            "Text",
-                            "Full",
-                        },
-                        tiles = {},
-                        cw = 168,
-                        ch = 210,
-                        cols = 6,
-                    }
-                pcall(function()
-                    if type(writefile) ~= "function" then
-                        return
-                    elseif type(getcustomasset) ~= "function" then
-                        return
-                    end
-                    if not (type(isfile) == "function" and isfile("PulseHub/esp_presets_v3.jpg")) then
-                        presetTiles.data = getgenv().__pulseData.take("esp_presets")
-                        if not presetTiles.data then
-                            return
-                        end
-                        local callback2, entries3, concatResult =
-                            ipairs, { crypt and crypt.base64decode, base64decode, base64_decode, base64 and base64.decode }
-                        for unused, item in callback2(entries3) do
-                            if type(item) == "function" then
-                                local success, result = pcall(item, presetTiles.data)
-                                if success then
-                                    if type(result) == "string" then
-                                        if #result > 0 then
-                                            concatResult = result
-                                            break
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                        if concatResult then
-                        else
-                            entries3 = {}
-                            for index = 1, 64, 1 do
-                                entries3[string.byte(
-                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
-                                    index
-                                )] = index
-                                    - 1
-                            end
-                            local entries4, data, counter = {}, presetTiles.data, 0
-                            for index = 1, #data - 3, 4 do
-                                local byteResult, byteResult2, byteResult3, byteResult4 =
-                                    string.byte(data, index, index + 3)
-                                callback2 = (entries3[byteResult] or 0) * 262144
-                                    + (entries3[byteResult2] or 0) * 4096
-                                    + (entries3[byteResult3] or 0) * 64
-                                    + (entries3[byteResult4] or 0)
-                                index, byteResult, byteResult2 =
-                                    math.floor(callback2 / 65536) % 256, math.floor(callback2 / 256) % 256, callback2 % 256
-                                counter += 1
-                                if byteResult3 == 61 then
-                                    entries4[counter] = string.char(index)
-                                elseif byteResult4 == 61 then
-                                    entries4[counter] = string.char(index, byteResult)
-                                else
-                                    entries4[counter] = string.char(index, byteResult, byteResult2)
-                                end
-                            end
-                            concatResult = table.concat(entries4)
-                        end
-                        pcall(function()
-                            if type(isfolder) == "function" then
-                                if not (isfolder("PulseHub")) then
-                                    makefolder("PulseHub")
-                                end
-                            end
-                        end)
-                        writefile("PulseHub/esp_presets_v3.jpg", concatResult)
-                    end
-                    local atlas = getcustomasset("PulseHub/esp_presets_v3.jpg")
-                    if type(atlas) == "string" then
-                        if #atlas > 0 then
-                            presetTiles.atlas = atlas
-                        end
-                    end
-                end)
-                presetTiles.data = nil
-                presetTiles.index = {}
-                for key, item in ipairs(presetTiles.order) do
-                    presetTiles.index[item] = key
-                end
-                local value = createInstance(
-                    "Frame",
-                    { Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1 },
-                    uiPage:Container()
-                )
-                local value2 = createInstance(
-                    "UIGridLayout",
-                    {
-                        CellSize = UDim2.fromOffset(96, 120),
-                        CellPadding = UDim2.fromOffset(8, 8),
-                        SortOrder = Enum.SortOrder.LayoutOrder,
-                    },
-                    value
-                )
-                local function handleAction()
-                    if mainWindow then
-                        if mainWindow.Scaling then
-                            if mainWindow._scalingDefer then
-                                mainWindow:_scalingDefer(handleAction)
-                            end
-                            return
-                        end
-                    end
-                    local calculatedValue = mainWindow and mainWindow.Scale and mainWindow.Scale.Scale or 1
-                    local calculatedValue2 = value.AbsoluteSize.X / math.max(calculatedValue, 0.1)
-                    if calculatedValue2 < 60 then
-                        return
-                    end
-                    calculatedValue = calculatedValue2 >= 420 and 4 or 3
-                    local roundedValue = math.floor((calculatedValue2 - 8 * (calculatedValue - 1)) / calculatedValue)
-                    value2.CellSize =
-                        UDim2.fromOffset(roundedValue, math.floor(roundedValue * presetTiles.ch / presetTiles.cw + 0.5))
-                end
-                connectSignal(value:GetPropertyChangedSignal("AbsoluteSize"), handleAction)
-                task.defer(handleAction)
-                presetTiles.paint = function(argument)
-                    local calculatedValue = pulseESP2.style == argument.key
-                    nv.paint(argument.st, "Color", (calculatedValue or argument.hover) and "Accent" or "Glass", "Quick")
-                    nv.Motion.tween(
-                        argument.st,
-                        "Quick",
-                        {
-                            Transparency = calculatedValue and 0.05 or (argument.hover and 0.4 or 0.8),
-                            Thickness = calculatedValue and 2 or 1,
-                        }
-                    )
-                    nv.paint(argument.plate, "BackgroundColor3", calculatedValue and "Accent" or "Surface2", "Quick")
-                    local tweenInstance, plate, entries3 = nv.Motion.tween, argument.plate, {}
-                    entries3.BackgroundTransparency = calculatedValue and 0.15 or 0.2
-                    tweenInstance(plate, "Quick", entries3)
-                    nv.paint(argument.l, "TextColor3", calculatedValue and "Text" or "Muted", "Quick")
-                end
-                h, styles = ipairs, pulseESP2.styles
-                for plate, b in h(styles) do
-                    local key = b.name
-                    b = createInstance(
-                        "TextButton",
-                        { Text = "", AutoButtonColor = false, BorderSizePixel = 0, LayoutOrder = plate },
-                        value
-                    )
-                    callback3(b, 12)
-                    nv.Theme.bind(b, "BackgroundColor3", "Surface2")
-                    entries2 = createInstance(
-                        "ImageLabel",
-                        { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Crop, ZIndex = 2 },
-                        b
-                    )
-                    callback3(entries2, 12)
-                    plate = presetTiles.index[key]
-                    if presetTiles.atlas then
-                        if plate then
-                            entries2.Image = presetTiles.atlas
-                            entries2.ImageRectOffset = Vector2.new(
-                                (plate - 1) % presetTiles.cols * presetTiles.cw,
-                                math.floor((plate - 1) / presetTiles.cols) * presetTiles.ch
-                            )
-                            entries2.ImageRectSize = Vector2.new(presetTiles.cw, presetTiles.ch)
-                        end
-                    end
-                    plate = createInstance(
-                        "Frame",
-                        {
-                            AnchorPoint = Vector2.new(0.5, 1),
-                            Position = UDim2.new(0.5, 0, 1, -5),
-                            Size = UDim2.new(1, -10, 0, 20),
-                            BorderSizePixel = 0,
-                            ZIndex = 3,
-                        },
-                        b
-                    )
-                    callback3(plate, 6)
-                    local l = nv.label({
-                        Parent = plate,
-                        Text = localization.tr(key),
-                        Font = nv.Font.Semi(),
-                        Size = 11,
-                        Pos = UDim2.fromOffset(6, 0),
-                        Box = UDim2.new(1, -12, 1, 0),
-                        Truncate = true,
-                        Color = "Muted",
-                    })
-                    pcall(function()
-                        l.TextXAlignment = Enum.TextXAlignment.Center
-                        l.ZIndex = 4
-                        l.TextTruncate = Enum.TextTruncate.None
-                        l.TextWrapped = true
-                        l.TextScaled = true
-                        createInstance("UITextSizeConstraint", { MaxTextSize = 11, MinTextSize = 7 }, l)
-                        localization.bind(l, key)
-                    end)
-                    local st = createInstance(
-                        "UIStroke",
-                        { Thickness = 1, Transparency = 0.8, ApplyStrokeMode = Enum.ApplyStrokeMode.Border },
-                        b
-                    )
-                    nv.Theme.bind(st, "Color", "Glass")
-                    local entries3 = { key = key, b = b, st = st, plate = plate, l = l, hover = false }
-                    presetTiles.tiles[#presetTiles.tiles + 1] = entries3
-                    connectSignal(b.MouseEnter, function()
-                        entries3.hover = true
-                        presetTiles.paint(entries3)
-                    end)
-                    nv.U.leave(b, function()
-                        entries3.hover = false
-                        presetTiles.paint(entries3)
-                    end)
-                    connectSignal(b.MouseButton1Click, function()
-                        pcall(function()
-                            nv.Sound.play("tick")
-                        end)
-                        pulseESP2.applyPreset(key)
-                        for unused, item in ipairs(presetTiles.tiles) do
-                            presetTiles.paint(item)
-                        end
-                    end)
-                    presetTiles.paint(entries3)
-                end
-                entries.presetTiles = presetTiles
-            end
             uiPage:Group({ Title = "ESP Box", Side = "Right" })
             callback7("box", "Player Box", function()
                 callback9("boxStyle", "Frame Style", pulseESP2.BOX_STYLES)
@@ -65631,6 +65380,10 @@ local function createNativeLibrary()
                 local entry = sharedState2.NovaTabs[name2]
                 if entry then
                     return entry
+                end
+                if name2 == "Music" or name2 == "Auras" or name2 == "Weapon Skins" then
+                    -- retired sidebar tabs: their pages fall back to the stub UI
+                    return nil
                 end
                 local success, result = pcall(function()
                     local instanceOptions = { Name = name2, Icon = argument[argument7] or argument7 or "circle" }
@@ -113682,7 +113435,24 @@ local function createNativeLibrary()
                                     end
                                 end
                             end
+                            -- one-time migration: flat panels, plain backdrop, compact rows
+                            if state.get("skinFlatV2", false) ~= true then
+                                state.set("skinFlatV2", true)
+                                state.set("cardStyle", "Flat")
+                                state.set("bgStyle", "Plain")
+                                state.set("density", "Compact")
+                                state.set("tabOrder", nil)
+                            end
+                            -- one-time migration: render at 1:1 so text is never resampled
+                            if state.get("sharpV1", false) ~= true then
+                                state.set("sharpV1", true)
+                                state.set("scale", 1)
+                            end
                             local gui = state.get("size", nil)
+                            if type(gui) == "table" and tonumber(gui[1]) == 900 and tonumber(gui[2]) == 680 then
+                                -- the old default window was too narrow for three columns
+                                gui = nil
+                            end
                             if type(gui) == "table" then
                                 if tonumber(gui[1]) then
                                     if tonumber(gui[2]) then
@@ -113828,12 +113598,11 @@ local function createNativeLibrary()
                                 }
                             )
                             win = createInstance(
-                                "CanvasGroup",
+                                "Frame",
                                 {
                                     Name = "Window",
                                     Size = UDim2.fromScale(1, 1),
                                     BorderSizePixel = 0,
-                                    GroupTransparency = 1,
                                     BackgroundTransparency = 1 - setmetatableResult.Opacity,
                                     ZIndex = 1,
                                     Parent = root,
@@ -113955,6 +113724,7 @@ local function createNativeLibrary()
                             if parent then
                                 bindTheme(parent, "ImageColor3", "Glass")
                             end
+                            setmetatableResult.WindowRim = parent
                             setmetatableResult.FloatLayer = createInstance(
                                 "Frame",
                                 {
@@ -114665,6 +114435,27 @@ local function createNativeLibrary()
                             if bgLayers.grain then
                                 bgLayers.grain.ImageTransparency = callback(bgStyle == "Noise" and 0.55 or 0.82)
                             end
+                            if bgStyle == "Plain" then
+                                -- flat skin: drop the haze, grain and vignette behind the window
+                                if bgLayers.meshA then
+                                    bgLayers.meshA.ImageTransparency = 1
+                                end
+                                if bgLayers.meshB then
+                                    bgLayers.meshB.ImageTransparency = 1
+                                end
+                                if bgLayers.auraA then
+                                    bgLayers.auraA.ImageTransparency = 1
+                                end
+                                if bgLayers.auraB then
+                                    bgLayers.auraB.ImageTransparency = 1
+                                end
+                                if bgLayers.grain then
+                                    bgLayers.grain.ImageTransparency = 1
+                                end
+                                if bgLayers.vignette then
+                                    bgLayers.vignette.ImageTransparency = 1
+                                end
+                            end
                         end
                         index.SetBackground = function(argument, bgStyle)
                             localization2.trace("SetBackground")
@@ -115047,7 +114838,7 @@ local function createNativeLibrary()
                             local function handleAction()
                                 tweenInstance(tileResult, "Quick", { [calculatedValue] = theme.resolve("Danger") })
                                 tweenInstance(value2, "Quick", { ImageColor3 = Color3.new(1, 1, 1) })
-                                if imageResult then
+                                if imageResult and argument.CardStyle ~= "Flat" then
                                     tweenInstance(imageResult, "Quick", { ImageTransparency = 0.72 })
                                 end
                                 tweenInstance(value, "Quick", { Scale = 1.06 })
@@ -115515,7 +115306,7 @@ local function createNativeLibrary()
                                 elseif argument.AutoFit then
                                     local maximumValue = math.max(argument.UserScale, 0.1)
                                     local maximumValue2, calculatedValue2, calculatedValue3, x, y =
-                                        math.max(maximumValue * position, math.min(0.6, maximumValue)),
+                                        math.max(maximumValue, math.min(0.6, maximumValue)),
                                         calculatedValue.X - 24,
                                         calculatedValue.Y - 24,
                                         argument.Size.X,
@@ -116353,7 +116144,6 @@ local function createNativeLibrary()
                                 end
                             end
                             local scale = argument.AutoScale * argument.UserScale
-                            argument.Win.GroupTransparency = 1
                             if position2 then
                                 argument.Scaling = true
                                 argument.Root.Position = position2
@@ -116363,7 +116153,6 @@ local function createNativeLibrary()
                                 argument.FloatLayer.Visible = true
                                 argument.GeniePos = tweenInstance(argument.Root, tweenInfo, { Position = position })
                                 argument.GenieScale = tweenInstance(argument.Scale, tweenInfo, { Scale = scale })
-                                tweenInstance(argument.Win, tweenInfo3, { GroupTransparency = 0 })
                                 task.delay(tweenInfo.Time + 0.03, function()
                                     if argument.OpenToken == openToken then
                                         argument:_endScaling()
@@ -116375,7 +116164,6 @@ local function createNativeLibrary()
                                 argument:_syncLayers()
                                 argument.Root.Visible = true
                                 argument.FloatLayer.Visible = true
-                                tweenInstance(argument.Win, tweenInfo3, { GroupTransparency = 0 })
                             end
                             if argument.WindowShadow then
                                 argument.WindowShadow.ImageTransparency = 1
@@ -116416,7 +116204,6 @@ local function createNativeLibrary()
                                 argument.HomePos = argument.Root.Position
                                 argument.GeniePos = tweenInstance(argument.Root, tweenInfo2, { Position = position })
                                 argument.GenieScale = tweenInstance(argument.Scale, tweenInfo2, { Scale = scale * 0.12 })
-                                tweenInstance(argument.Win, tweenInfo4, { GroupTransparency = 1 })
                                 calculatedValue = tweenInfo2.Time + 0.03
                                 local launcherParts = argument.LauncherParts
                                 if launcherParts then
@@ -116439,7 +116226,6 @@ local function createNativeLibrary()
                                     end)
                                 end
                             else
-                                tweenInstance(argument.Win, "Exit", { GroupTransparency = 1 })
                             end
                             if argument.WindowShadow then
                                 tweenInstance(argument.WindowShadow, "Exit", { ImageTransparency = 1 })
@@ -116561,6 +116347,7 @@ local function createNativeLibrary()
                         localization2.WindowClass.PopOut =
                             TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
                         index.PopupShell = function(parent, entries, image)
+                            local owner = parent
                             local parent2 = createInstance(
                                 "Frame",
                                 {
@@ -116599,8 +116386,9 @@ local function createNativeLibrary()
                             bindTheme(parent, "BackgroundColor3", "Elevated")
                             u.corner(parent, 12)
                             image, entries = tex.image, {}
+                            local glossAlpha = owner.CardStyle == "Flat" and 1 or 0.88
                             entries.Size, entries.SliceScale, entries.ImageTransparency, entries.ZIndex =
-                                UDim2.fromScale(1, 1), 0.86, 0.88, 2
+                                UDim2.fromScale(1, 1), 0.86, glossAlpha, 2
                             image(parent, "gloss9", entries)
                             image = tex.image(
                                 parent,
@@ -116609,7 +116397,10 @@ local function createNativeLibrary()
                             )
                             if image then
                                 bindTheme(image, "ImageColor3", "Glass")
-                            else
+                                if owner.CardStyle == "Flat" then
+                                    image.ImageTransparency = 1
+                                end
+                            elseif owner.CardStyle ~= "Flat" then
                                 bindTheme(u.stroke(parent, Color3.new(1, 1, 1), 1, 0.85), "Color", "Glass")
                             end
                             return parent2, parent, (createInstance("UIScale", { Scale = 0.92, Parent = parent }))
@@ -116915,7 +116706,7 @@ local function createNativeLibrary()
                             if argument.SidebarCollapsed then
                                 return 1
                             end
-                            return argument2 and 0.05 or 0.4
+                            return argument2 and 0.05 or 1
                         end
                         windowClass.Densities = { "Comfortable", "Compact" }
                         windowClass.applyDensity = function(argument)
@@ -117440,7 +117231,7 @@ local function createNativeLibrary()
                             end)
                             argument.SearchTile = searchTile
                             local tabClip = createInstance(
-                                "CanvasGroup",
+                                "Frame",
                                 {
                                     Name = "TabsClip",
                                     Position = UDim2.fromOffset(0, value.tabTop),
@@ -117875,25 +117666,23 @@ local function createNativeLibrary()
                             hit = u.stroke(bg, color, 1, 1)
                             bindTheme(hit, "Color", "Accent")
                             pressTab.Bg = bg
-                            pressTab.BgStroke = hit
-                            local getResult, glow =
-                                { Transparency = NumberSequence.new({ callback(0, 0), callback(0.5, 0.12), callback(
-                                    1,
-                                    0.92
-                                ) }) },
-                                not sidebarCollapsed
-                            getResult.Enabled = glow
+                            pressTab.BgStroke = hit                                local getResult, glow =
+                                    { Transparency = NumberSequence.new({ callback(0, 0), callback(0.5, 0.06), callback(
+                                        1,
+                                        0.5
+                                    ) }) },
+                                    not sidebarCollapsed
+                            getResult.Enabled = glow and argument.CardStyle ~= "Flat"
                             getResult.Parent = bg
                             pressTab.BgGrad = createInstance("UIGradient", getResult)
                             pressTab.StrokeGrad = createInstance(
                                 "UIGradient",
-                                {
-                                    Transparency = NumberSequence.new({
-                                        callback(0, 0),
-                                        callback(0.4, 0.35),
-                                        callback(0.85, 1),
-                                        callback(1, 1),
-                                    }),
+                                {                                        Transparency = NumberSequence.new({
+                                            callback(0, 0),
+                                            callback(0.4, 0),
+                                            callback(0.85, 0),
+                                            callback(1, 0),
+                                        }),
                                     Enabled = glow,
                                     Parent = hit,
                                 }
@@ -117925,7 +117714,7 @@ local function createNativeLibrary()
                                     Pos = UDim2.new(0, getResult, 0.5, 0),
                                     Anchor = Vector2.new(0, 0.5),
                                     Color = "Elevated",
-                                    Alpha = sidebarCollapsed and 1 or 0.4,
+                                    Alpha = 1,
                                     Z = 2,
                                 }
                             )
@@ -118094,7 +117883,9 @@ local function createNativeLibrary()
                                 entries.Transparency = sidebarCollapsed and 1 or 0.72
                                 tweenInstance(bgStroke, calculatedValue, entries)
                                 if argument2.Glow then
-                                    tweenInstance(argument2.Glow, calculatedValue, { ImageTransparency = 0.5 })
+                                    tweenInstance(argument2.Glow, calculatedValue, {
+                                        ImageTransparency = argument.CardStyle == "Flat" and 1 or 0.5,
+                                    })
                                 end
                             else
                                 paint(argument2.Tile, tileProp, "Elevated", calculatedValue)
@@ -118329,7 +118120,8 @@ local function createNativeLibrary()
                                     main, footerText =
                                         visible and counter6 or argument.TileS,
                                         visible and (sidebarCOLLAPSED - 16 - counter6) / 2 or 6
-                                    item2.BgGrad.Enabled, item2.StrokeGrad.Enabled = visible2, visible2
+                                    item2.BgGrad.Enabled, item2.StrokeGrad.Enabled =
+                                        visible2 and argument.CardStyle ~= "Flat", visible2
                                     tweenInstance(
                                         item2.Tile,
                                         calculatedValue,
@@ -118730,7 +118522,7 @@ local function createNativeLibrary()
                             setmetatableResult.Sections = {}
                             setmetatableResult.Pages = {}
                             setmetatableResult.Loads = {}
-                            setmetatableResult.Columns = name.Columns or 2
+                            setmetatableResult.Columns = name.Columns or 3
                             window.Tabs[setmetatableResult.Name] = setmetatableResult
                             table.insert(window.TabList, setmetatableResult)
                             window:_addTabRow(setmetatableResult, name)
@@ -119430,7 +119222,7 @@ local function createNativeLibrary()
                                 or argument.PageColumns ~= nil and argument.PageColumns[key] == 1
                             local calculatedValue = argument.SubBar and 48 or 0
                             local root = createInstance(
-                                "CanvasGroup",
+                                "Frame",
                                 {
                                     Name = "Clip_" .. tostring(key),
                                     Position = UDim2.fromOffset(0, calculatedValue),
@@ -119501,24 +119293,43 @@ local function createNativeLibrary()
                                     Parent = parent,
                                 }
                             )
+                            local multi = math.max(1, tonumber(argument.Columns) or 2) >= 3
+                            local firstFrac, firstOff = multi and (1 / 3) or 0.5, multi and -11 or -8
                             local left = createInstance(
                                 "Frame",
                                 {
                                     Name = "Left",
-                                    Size = UDim2.new(one and 1 or 0.5, one and 0 or -8, 0, 0),
+                                    Size = UDim2.new(one and 1 or firstFrac, one and 0 or firstOff, 0, 0),
                                     AutomaticSize = Enum.AutomaticSize.Y,
                                     BackgroundTransparency = 1,
                                     Parent = parent2,
                                 }
                             )
                             u.list(left, 16)
+                            local mid
+                            if multi then
+                                mid = createInstance(
+                                    "Frame",
+                                    {
+                                        Name = "Mid",
+                                        AnchorPoint = Vector2.new(0.5, 0),
+                                        Position = UDim2.fromScale(0.5, 0),
+                                        Size = UDim2.new(1 / 3, -11, 0, 0),
+                                        AutomaticSize = Enum.AutomaticSize.Y,
+                                        BackgroundTransparency = 1,
+                                        Visible = not one,
+                                        Parent = parent2,
+                                    }
+                                )
+                                u.list(mid, 16)
+                            end
                             local right = createInstance(
                                 "Frame",
                                 {
                                     Name = "Right",
                                     AnchorPoint = Vector2.new(1, 0),
                                     Position = UDim2.fromScale(1, 0),
-                                    Size = UDim2.new(0.5, -8, 0, 0),
+                                    Size = UDim2.new(firstFrac, firstOff, 0, 0),
                                     AutomaticSize = Enum.AutomaticSize.Y,
                                     BackgroundTransparency = 1,
                                     Visible = not one,
@@ -119530,18 +119341,49 @@ local function createNativeLibrary()
                                 Root = root,
                                 Scroll = parent,
                                 Left = left,
+                                Mid = mid,
                                 Right = right,
-                                Load = { 0, 0 },
+                                Load = { 0, 0, 0 },
                                 Key = key,
                                 Cols = parent2,
                                 One = one,
                             }
-                            local value, enabled =
-                                createInstance(
-                                    "UIListLayout",
-                                    { Padding = UDim.new(0, 16), SortOrder = Enum.SortOrder.LayoutOrder }
-                                ),
-                                false
+                            local value = createInstance(
+                                "UIListLayout",
+                                { Padding = UDim.new(0, 16), SortOrder = Enum.SortOrder.LayoutOrder }
+                            )
+                            local function applyCols(mode)
+                                entries2.LayoutMode = mode
+                                if mode == 1 then
+                                    left.AnchorPoint, left.Position, left.Size =
+                                        Vector2.zero, UDim2.new(), UDim2.new(1, 0, 0, 0)
+                                    left.LayoutOrder = 1
+                                    if mid then
+                                        mid.AnchorPoint, mid.Position, mid.Size =
+                                            Vector2.zero, UDim2.new(), UDim2.new(1, 0, 0, 0)
+                                        mid.LayoutOrder = 2
+                                    end
+                                    right.AnchorPoint, right.Position, right.Size =
+                                        Vector2.zero, UDim2.new(), UDim2.new(1, 0, 0, 0)
+                                    right.LayoutOrder = 3
+                                    value.Parent = parent2
+                                    return
+                                end
+                                value.Parent = nil
+                                local frac, offset = mode == 3 and (1 / 3) or 0.5, mode == 3 and -11 or -8
+                                left.AnchorPoint, left.Position, left.Size =
+                                    Vector2.zero, UDim2.new(), UDim2.new(frac, offset, 0, 0)
+                                right.AnchorPoint, right.Position, right.Size =
+                                    Vector2.new(1, 0), UDim2.fromScale(1, 0), UDim2.new(frac, offset, 0, 0)
+                                if mid then
+                                    mid.Visible = mode == 3
+                                    if mode == 3 then
+                                        mid.AnchorPoint, mid.Position, mid.Size =
+                                            Vector2.new(0.5, 0), UDim2.fromScale(0.5, 0), UDim2.new(1 / 3, -11, 0, 0)
+                                    end
+                                end
+                            end
+                            entries2.ApplyCols = applyCols
                             local function handleAction()
                                 if argument.Window.Scaling then
                                     argument.Window:_scalingDefer(handleAction)
@@ -119549,24 +119391,23 @@ local function createNativeLibrary()
                                 end
                                 local maximumValue = math.max(argument.Window.Scale.Scale, 0.1)
                                 local calculatedValue = parent.AbsoluteSize.X / maximumValue
-                                maximumValue = if one then not one else calculatedValue < 440
-                                if maximumValue == enabled then
+                                local mode
+                                if one then
+                                    mode = 1
+                                elseif calculatedValue < 440 then
+                                    mode = 1
+                                elseif multi and calculatedValue < 640 then
+                                    mode = 2
+                                elseif multi then
+                                    mode = 3
+                                else
+                                    mode = 2
+                                end
+                                if mode == entries2.LayoutMode then
                                     return
                                 end
-                                enabled = maximumValue
-                                if maximumValue then
-                                    left.Size = UDim2.new(1, 0, 0, 0)
-                                    right.AnchorPoint, right.Position, right.Size =
-                                        Vector2.zero, UDim2.new(), UDim2.new(1, 0, 0, 0)
-                                    left.LayoutOrder = 1
-                                    right.LayoutOrder = 2
-                                    value.Parent = parent2
-                                else
-                                    value.Parent = nil
-                                    left.Size = UDim2.new(0.5, -8, 0, 0)
-                                    right.AnchorPoint, right.Position, right.Size =
-                                        Vector2.new(1, 0), UDim2.fromScale(1, 0), UDim2.new(0.5, -8, 0, 0)
-                                end
+                                applyCols(mode)
+                                argument:_queueBalance(entries2)
                             end
                             parent:GetPropertyChangedSignal("AbsoluteSize"):Connect(handleAction)
                             task.defer(handleAction)
@@ -120042,22 +119883,41 @@ local function createNativeLibrary()
                                 end
                                 window[sec] = calculatedValue
                             end
-                            maximumValue = { 0, 0 }
+                            local columns = tonumber(argument2.LayoutMode) or 2
+                            columns = math.clamp(columns, 1, 3)
+                            if columns > 1 and #entries2 < columns and argument2.ApplyCols then
+                                -- never leave an empty column: one column per section at most
+                                columns = math.max(1, #entries2)
+                                argument2.ApplyCols(columns)
+                            end
+                            local function columnFrame(col)
+                                if col <= 1 then
+                                    return argument2.Left
+                                end
+                                if col >= 3 then
+                                    return argument2.Right
+                                end
+                                return columns == 3 and argument2.Mid or argument2.Right
+                            end
+                            maximumValue = { 0, 0, 0 }
                             for side, item in ipairs(entries2) do
                                 local sec, sec2 = item.sec
-                                if sec.Pinned then
-                                    sec2 = sec.Side or 1
+                                if sec.Pinned or sec.Floating then
+                                    sec2 = math.clamp(sec.Side or 1, 1, columns)
                                 else
-                                    if sec.Floating then
-                                        sec2 = sec.Side or 1
-                                    else
-                                        side = maximumValue[1] <= maximumValue[2] + 1 and 1 or 2
-                                        local parent = side == 1 and argument2.Left or argument2.Right
-                                        if sec.Wrap.Parent ~= parent then
-                                            sec.Wrap.Parent = parent
+                                    side = 1
+                                    for col = 2, columns do
+                                        if maximumValue[col] < maximumValue[side] then
+                                            side = col
                                         end
-                                        sec.Side = side
-                                        sec2 = side
+                                    end
+                                    sec.Side = side
+                                    sec2 = side
+                                end
+                                if not sec.Floating then
+                                    local parent = columnFrame(sec2)
+                                    if sec.Wrap.Parent ~= parent then
+                                        sec.Wrap.Parent = parent
                                     end
                                 end
                                 local calculatedValue = sec.Floating and sec.Slot or sec.Wrap
@@ -120326,12 +120186,12 @@ local function createNativeLibrary()
                                     Position = UDim2.new(0.5, 0, 1, 0),
                                     Size = UDim2.new(1, -28, 0, 1),
                                     BorderSizePixel = 0,
-                                    BackgroundTransparency = 0.5,
+                                    BackgroundTransparency = 0.88,
                                     ZIndex = 3,
                                     Parent = head,
                                 }
                             )
-                            bindTheme(setmetatableResult.HeadLine, "BackgroundColor3", "Line")
+                            bindTheme(setmetatableResult.HeadLine, "BackgroundColor3", "Glass")
                             createInstance(
                                 "UIGradient",
                                 {
@@ -120433,6 +120293,9 @@ local function createNativeLibrary()
                             end
                             card.MouseMoved:Connect(handleAction2)
                             local function getResult2()
+                                if window.CardStyle == "Flat" then
+                                    return
+                                end
                                 if setmetatableResult.Spot then
                                     tweenInstance(setmetatableResult.Spot, "Base", { ImageTransparency = 0.9 })
                                 end
@@ -120445,7 +120308,7 @@ local function createNativeLibrary()
                                 if setmetatableResult.Spot then
                                     tweenInstance(setmetatableResult.Spot, "Base", { ImageTransparency = 1 })
                                 end
-                                if setmetatableResult.Rim then
+                                if window.CardStyle ~= "Flat" and setmetatableResult.Rim then
                                     local rim, entries = setmetatableResult.Rim, {}
                                     entries.ImageTransparency = setmetatableResult.Floating and 0.3 or 0.5
                                     tweenInstance(rim, "Quick", entries)
@@ -120522,7 +120385,7 @@ local function createNativeLibrary()
                             entries.Rotation = collapsed and -90 or 0
                             tweenInstance(chev, calculatedValue, entries)
                             chev, entries = argument.HeadLine, {}
-                            entries.BackgroundTransparency = collapsed and 1 or 0.5
+                            entries.BackgroundTransparency = collapsed and 1 or 0.88
                             tweenInstance(chev, calculatedValue, entries)
                             calculatedValue = math.ceil(content.AbsoluteSize.Y / maximumValue) + 16
                             if collapsed then
@@ -120821,8 +120684,38 @@ local function createNativeLibrary()
                             return row
                         end
                         windowClass.CardStyles = { "Glass", "Frosted", "Tinted", "Flat" }
+                        -- flat skin: the chrome around the cards keeps the same treatment
+                        windowClass._flatChrome = function(argument, flat)
+                            local masked = flat and 1 or nil
+                            local function hide(item, resting)
+                                if item then
+                                    item.ImageTransparency = masked or resting
+                                end
+                            end
+                            local function hideRim(button)
+                                local rim = button and button:FindFirstChild("Rim")
+                                if rim then
+                                    hide(rim, 0.72)
+                                end
+                            end
+                            hide(argument.WindowRim, 0.55)
+                            hide(argument.LogoButton and argument.LogoButton:FindFirstChild("Glow"), 0.6)
+                            hideRim(argument.CloseButton)
+                            for unused, button in ipairs(argument.HeaderButtons or {}) do
+                                hideRim(button)
+                            end
+                            local parts = argument.LauncherParts
+                            if parts then
+                                hide(parts.shadow, 0.5)
+                                hide(parts.rim, 0.45)
+                                hide(parts.glow, 0.85)
+                                hide(parts.card and parts.card:FindFirstChild("Gloss"), 0.9)
+                            end
+                        end
                         windowClass._applyCardStyle = function(resolveResult, argument)
-                            local calculatedValue, card = resolveResult.CardStyle or "Glass", argument.Card
+                            local calculatedValue, card = resolveResult.CardStyle or "Glass",
+                                argument and argument.Card
+                            resolveResult:_flatChrome(calculatedValue == "Flat")
                             if not card then
                                 return
                             end
@@ -120835,6 +120728,12 @@ local function createNativeLibrary()
                                 end
                                 if argument.Grain then
                                     argument.Grain.ImageTransparency = 1
+                                end
+                                if argument.Rim then
+                                    argument.Rim.ImageTransparency = 1
+                                end
+                                if argument.Shadow then
+                                    argument.Shadow.ImageTransparency = 1
                                 end
                             elseif calculatedValue == "Frosted" then
                                 card.BackgroundTransparency = 0.32
@@ -120863,6 +120762,14 @@ local function createNativeLibrary()
                                 end
                                 if argument.Grain then
                                     argument.Grain.ImageTransparency = 0.94
+                                end
+                            end
+                            if calculatedValue ~= "Flat" then
+                                if argument.Rim then
+                                    argument.Rim.ImageTransparency = 0.5
+                                end
+                                if argument.Shadow then
+                                    argument.Shadow.ImageTransparency = 0.62
                                 end
                             end
                         end
@@ -121083,11 +120990,13 @@ local function createNativeLibrary()
                             argument2.Floating = true
                             argument2.WasFloating = true
                             table.insert(argument.Floats, argument2)
-                            if argument2.Shadow then
-                                argument2.Shadow.ImageTransparency = 0.3
-                            end
-                            if argument2.Rim then
-                                argument2.Rim.ImageTransparency = 0.3
+                            if argument.CardStyle ~= "Flat" then
+                                if argument2.Shadow then
+                                    argument2.Shadow.ImageTransparency = 0.3
+                                end
+                                if argument2.Rim then
+                                    argument2.Rim.ImageTransparency = 0.3
+                                end
                             end
                             slot, wrap, parent =
                                 createInstance(
@@ -121374,11 +121283,13 @@ local function createNativeLibrary()
                                 argument2.DockButton:Destroy()
                                 argument2.DockButton = nil
                             end
-                            if argument2.Shadow then
-                                tweenInstance(argument2.Shadow, "Base", { ImageTransparency = 0.62 })
-                            end
-                            if argument2.Rim then
-                                argument2.Rim.ImageTransparency = 0.5
+                            if argument.CardStyle ~= "Flat" then
+                                if argument2.Shadow then
+                                    tweenInstance(argument2.Shadow, "Base", { ImageTransparency = 0.62 })
+                                end
+                                if argument2.Rim then
+                                    argument2.Rim.ImageTransparency = 0.5
+                                end
                             end
                             task.defer(function()
                                 if argument2._sync then
@@ -121937,9 +121848,28 @@ local function createNativeLibrary()
                                 end
                             end
                             if calculatedValue.Drawer then
-                                local value4 =
-                                    icon({ Parent = rowObj.Right, Icon = "settings", Size = 13, Color = "Faint", Z = 3 })
-                                value4.LayoutOrder = 8
+                                local value4Button = createInstance(
+                                    "TextButton",
+                                    {
+                                        Name = "Gear",
+                                        Text = "",
+                                        AutoButtonColor = false,
+                                        BackgroundTransparency = 1,
+                                        Size = UDim2.fromOffset(24, 26),
+                                        LayoutOrder = 8,
+                                        ZIndex = 3,
+                                        Parent = rowObj.Right,
+                                    }
+                                )
+                                local value4 = icon({
+                                    Parent = value4Button,
+                                    Icon = "settings",
+                                    Size = 13,
+                                    Pos = UDim2.fromScale(0.5, 0.5),
+                                    Anchor = Vector2.new(0.5, 0.5),
+                                    Color = "Faint",
+                                    Z = 3,
+                                })
                                 parentSection.Order = parentSection.Order + 1
                                 local indent = rowObj.Indent
                                 local value5 = createInstance(
@@ -122068,7 +121998,7 @@ local function createNativeLibrary()
                                         argument and TweenInfo.new(0) or "Quick"
                                     )
                                     local calculatedValue3, backgroundTransparency =
-                                        tweenInfo and isActive3() or 0, tweenInfo and 0.42 or 1
+                                        0, tweenInfo and 0.42 or 1
                                     if argument then
                                         drawerFrame.Size = UDim2.new(1, 0, 0, calculatedValue3)
                                         value5.Size = callback(calculatedValue3)
@@ -122087,10 +122017,127 @@ local function createNativeLibrary()
                                         )
                                     end
                                 end
-                                local function callback5(argument, argument2)
-                                    enabled2 = argument and true or false
-                                    callback4(argument2)
+                                local popupWidth = 300
+                                local popupShell, popupBody, popupHeight = nil, nil, 0
+                                local function sizePopup()
+                                    if not popupShell or not popupShell.Parent then
+                                        return
+                                    end
+                                    local scaleValue = math.max(window.PopScale.Scale, 0.1)
+                                    local height =
+                                        math.max(72, math.ceil(parent.AbsoluteSize.Y / scaleValue) + 46)
+                                    if math.abs(height - popupHeight) < 1 then
+                                        return
+                                    end
+                                    popupHeight = height
+                                    popupShell.Size = UDim2.fromOffset(popupWidth, height)
+                                    local placeX, placeY =
+                                        window:PopupPlace(value4Button, popupWidth, height, "right")
+                                    popupShell.Position = UDim2.fromOffset(placeX, placeY)
                                 end
+                                local function closeSettings()
+                                    if not popupShell then
+                                        return
+                                    end
+                                    local shell, body = popupShell, popupBody
+                                    popupShell, popupBody, popupHeight = nil, nil, 0
+                                    enabled2 = false
+                                    parent.Size = UDim2.new(1, -indent, 0, 0)
+                                    parent.Position = UDim2.fromOffset(indent, 0)
+                                    parent.Parent = drawerFrame
+                                    window:PopupConceal(shell, body)
+                                    if window.SettingsPopup == closeSettings then
+                                        window.SettingsPopup = nil
+                                    end
+                                    task.delay(0.18, function()
+                                        shell:Destroy()
+                                    end)
+                                    callback4(false)
+                                end
+                                local function installSettingsHooks(hookWindow)
+                                    if hookWindow.SettingsHooks then
+                                        return
+                                    end
+                                    hookWindow.SettingsHooks = true
+                                    local previousTabChanged = hookWindow.OnTabChanged
+                                    hookWindow.OnTabChanged = function(tab, ...)
+                                        if previousTabChanged then
+                                            pcall(previousTabChanged, tab, ...)
+                                        end
+                                        if hookWindow.SettingsPopup then
+                                            pcall(hookWindow.SettingsPopup)
+                                        end
+                                    end
+                                    local previousClose = hookWindow.Close
+                                    hookWindow.Close = function(...)
+                                        if hookWindow.SettingsPopup then
+                                            pcall(hookWindow.SettingsPopup)
+                                        end
+                                        if previousClose then
+                                            return previousClose(...)
+                                        end
+                                    end
+                                end
+
+                                local function openSettings()
+                                    if popupShell then
+                                        return
+                                    end
+                                    sound.play("click")
+                                    local shell, body, popScale = window:PopupShell(popupWidth, 80)
+                                    local placeX, placeY, unused, flip =
+                                        window:PopupPlace(value4Button, popupWidth, 80, "right")
+                                    shell.Position = UDim2.fromOffset(placeX, placeY)
+                                    local titleText = tostring(rowObj.Title and rowObj.Title.Text or "")
+                                    if titleText ~= "" then
+                                        label({
+                                            Parent = body,
+                                            Text = titleText,
+                                            Font = font.Bold(),
+                                            Size = 13,
+                                            Pos = UDim2.fromOffset(14, 12),
+                                            Box = UDim2.new(1, -44, 0, 18),
+                                            Color = "Text",
+                                            Truncate = true,
+                                            Z = 6,
+                                        })
+                                    end
+                                    parent.Position = UDim2.fromOffset(14, 34)
+                                    parent.Size = UDim2.new(0, popupWidth - 28, 0, 0)
+                                    parent.Parent = body
+                                    popupShell, popupBody, popupHeight = shell, body, 0
+                                    enabled2 = true
+                                    window:PopupReveal(shell, body, popScale, flip == 1)
+                                    -- deliberately not registered with OpenPopup: the settings
+                                    -- drawer has to survive dropdowns, colour pickers and every
+                                    -- control the user presses inside the page
+                                    if window.SettingsPopup then
+                                        window.SettingsPopup()
+                                    end
+                                    window.SettingsPopup = closeSettings
+                                    installSettingsHooks(window)
+                                    callback4(true)
+                                    task.defer(sizePopup)
+                                    task.delay(0.2, sizePopup)
+                                end
+                                value4Button.MouseButton1Click:Connect(function()
+                                    if popupShell then
+                                        window:ClosePopups()
+                                        closeSettings()
+                                    else
+                                        openSettings()
+                                    end
+                                end)
+                                value4Button.MouseEnter:Connect(function()
+                                    if not enabled2 then
+                                        paint(value4, "ImageColor3", "Muted", "Quick")
+                                    end
+                                end)
+                                u.leave(value4Button, function()
+                                    if not enabled2 then
+                                        paint(value4, "ImageColor3", "Faint", "Quick")
+                                    end
+                                end)
                                 rowObj.OnRefresh = function()
                                     local calculatedValue3 = window.Query or ""
                                     local enabled = calculatedValue3 == ""
@@ -122104,6 +122151,9 @@ local function createNativeLibrary()
                                         end
                                     end
                                     drawerFrame.Visible = rowObj.isVisible() and enabled
+                                    if not rowObj.isVisible() then
+                                        closeSettings()
+                                    end
                                     value5.Visible = drawerFrame.Visible
                                     local calculatedValue4 = calculatedValue3 ~= "" and enabled and rowObj.isVisible()
                                     if calculatedValue4 ~= enabled3 then
@@ -122116,27 +122166,26 @@ local function createNativeLibrary()
                                         window:_scalingDefer(handleAction)
                                         return
                                     end
-                                    if isActive2() then
-                                        local value = isActive3()
-                                        drawerFrame.Size = UDim2.new(1, 0, 0, value)
-                                        value5.Size = callback(value)
-                                    end
+                                    sizePopup()
                                 end
                                 parent:GetPropertyChangedSignal("AbsoluteSize"):Connect(handleAction)
                                 ownerToggle.Drawer = drawer
                                 ownerToggle.DrawerFrame = drawerFrame
                                 ownerToggle.SetDrawer = function(unused, argument, argument2)
-                                    callback5(argument, argument2)
+                                    if argument then
+                                        openSettings()
+                                    else
+                                        closeSettings()
+                                    end
                                 end
-                                ownerToggle.IsDrawerOpen = function(argument)
-                                    argument = enabled2
-                                    return argument
+                                ownerToggle.IsDrawerOpen = function()
+                                    return popupShell ~= nil
                                 end
-                                ownerToggle.Changed = function(argument)
-                                    callback5(argument, false)
+                                ownerToggle.Changed = function()
+                                    callback4(false)
                                 end
                                 task.defer(function()
-                                    callback5(calculatedValue2, true)
+                                    callback4(true)
                                 end)
                             end
                             ownerToggle.Set = function(unused, argument)
@@ -161014,10 +161063,10 @@ return {
     revision = "NATIVE UI FIX 3",
     source = "User-provided original screenshots image-1.png through image-11.png",
     visualPreset = {
-        size = { 900, 680 },
-        scale = 0.95,
+        size = { 1180, 760 },
+        scale = 1,
         sidebarWidth = 210,
-        density = "Comfortable",
+        density = "Compact",
         radius = 0.4,
         textScale = 1.12,
         font = "Builder Sans",
@@ -161028,23 +161077,36 @@ return {
         cardStyle = "Flat",
         menuKey = "LeftControl",
     },
+    sidebarGroups = {
+        Murderer = "Combat",
+        Sheriff = "Combat",
+        ESP = "Visuals",
+        World = "Visuals",
+        Weather = "Visuals",
+        Sky = "Visuals",
+        Effects = "Visuals",
+        Movement = "Player",
+        Player = "Player",
+        Teleport = "Player",
+        Farm = "Farm",
+        Roles = "Farm",
+        Crates = "Farm",
+        Trade = "Farm",
+        Animations = "Fun",
+        Troll = "Fun",
+        Mobile = "System",
+        Settings = "System",
+        Server = "System",
+    },
     tabs = {
         { name = "Murderer", icon = "sword", desc = "Kill aura, knife throws and targets" },
         { name = "Sheriff", icon = "shield", desc = "Silent aim, aimbot and gun tools" },
-        {
-            name = "Visuals",
-            icon = "eye",
-            desc = "ESP, world lighting and effects",
-            subs = {
-                { key = "ESP", label = "ESP" },
-                { key = "World", label = "World" },
-                { key = "Weather", label = "Weather" },
-                { key = "Sky", label = "Sky" },
-                { key = "Effects", label = "Effects" },
-                { key = "Auras", label = "Auras" },
-                { key = "Skins", label = "Skins" },
-            },
-        },
+        { name = "ESP", icon = "eye", desc = "Player ESP, boxes, chams and X-Ray" },
+        { name = "World", icon = "palette", desc = "Shaders, lighting, materials and textures", columns = 2 },
+        { name = "Weather", icon = "cloud", desc = "Rain, snow and weather packs" },
+        { name = "Sky", icon = "sun", desc = "Skyboxes, clouds and time of day" },
+        { name = "Effects", icon = "sparkles", desc = "Screen effects, trails and extras" },
+        { name = "Movement", icon = "footprints", desc = "Flight, noclip, spin and bomb jump" },
         { name = "Player", icon = "user", desc = "Movement, speed and protection" },
         { name = "Teleport", icon = "map-pin", desc = "Jump to roles and players" },
         {
@@ -161053,11 +161115,12 @@ return {
             desc = "Auto farm, session stats and trading",
             subs = {
                 { key = "Coin", label = "Coin" },
-                { key = "Role", label = "Role" },
-                { key = "Boxes", label = "Boxes" },
                 { key = "Webhook", label = "Webhook" },
             },
         },
+        { name = "Roles", icon = "crown", desc = "Prestige, role actions and role farm" },
+        { name = "Crates", icon = "package", desc = "Auto open crates and box farming" },
+        { name = "Trade", icon = "handshake", desc = "Item values and auto trading" },
         {
             name = "Animations",
             icon = "person-running",
@@ -161095,14 +161158,9 @@ return {
     },
     aliases = {
         Main = "Player",
-        Movement = "Player",
         Combat = "Sheriff",
         ["Combat Extras"] = "Player",
-        ESP = "Visuals",
         ["Auto Farm"] = "Farm",
-        Roles = "Farm",
-        Crates = "Farm",
-        Trade = "Farm",
         Avatar = "Animations",
         ["Free anims"] = "Animations",
         ["Free Anims"] = "Animations",
@@ -161223,55 +161281,54 @@ return {
     },
     cards = {
         Murderer = {
-            Murder = { side = "Left", order = 10 },
-            ["Kill Player"] = { side = "Left", order = 20 },
-            ["Knife Throw"] = { side = "Right", order = 10 },
+            Murder = { order = 10 },
+            ["Kill Player"] = { order = 20 },
+            ["Knife Throw"] = { order = 10 },
         },
         Sheriff = {
-            Sheriff = { side = "Left", order = 10 },
-            ["AimBot FOV"] = { side = "Left", order = 20 },
-            ["Bullet Tracers"] = { side = "Left", order = 30 },
-            AimBot = { side = "Right", order = 10 },
+            Sheriff = { order = 10 },
+            ["AimBot FOV"] = { order = 20 },
+            ["Bullet Tracers"] = { order = 30 },
+            AimBot = { order = 10 },
         },
         Player = {
-            Movement = { side = "Left", order = 10 },
-            ["Anti-Aim"] = { side = "Right", order = 10 },
-            ["Speed & Jump"] = { side = "Right", order = 20 },
-            ["Wall Hop"] = { side = "Right", order = 30 },
+            Movement = { order = 10 },
+            ["Anti-Aim"] = { order = 10 },
+            ["Speed & Jump"] = { order = 20 },
+            ["Wall Hop"] = { order = 30 },
         },
-        Visuals = {
-            ESP = { side = "Left", order = 10 },
-            Presets = { side = "Right", order = 10 },
-            Box = { side = "Left", order = 20 },
+        ESP = {
+            ESP = { order = 10 },
+            Box = { order = 20 },
         },
         Farm = {
-            Stats = { side = "Left", order = 10 },
-            Trade = { side = "Left", order = 20 },
-            Farm = { side = "Right", order = 10 },
+            Stats = { order = 10 },
+            Trade = { order = 20 },
+            Farm = { order = 10 },
         },
         Mobile = {
-            General = { side = "Left", order = 10 },
-            ["Buttons Style"] = { side = "Right", order = 10 },
-            ["Bhop Button"] = { side = "Left", order = 20 },
-            ["Fly Button"] = { side = "Right", order = 20 },
-            ["Fling Murderer Button"] = { side = "Left", order = 30 },
-            ["Fling Sheriff Button"] = { side = "Right", order = 30 },
-            ["Kill All Murder Button"] = { side = "Left", order = 40 },
-            ["Shot Murder Button"] = { side = "Right", order = 40 },
+            General = { order = 10 },
+            ["Buttons Style"] = { order = 10 },
+            ["Bhop Button"] = { order = 20 },
+            ["Fly Button"] = { order = 20 },
+            ["Fling Murderer Button"] = { order = 30 },
+            ["Fling Sheriff Button"] = { order = 30 },
+            ["Kill All Murder Button"] = { order = 40 },
+            ["Shot Murder Button"] = { order = 40 },
         },
         Settings = {
-            Menu = { side = "Left", order = 10 },
-            Theme = { side = "Left", order = 20 },
-            General = { side = "Left", order = 30 },
-            Interface = { side = "Right", order = 10 },
-            Behavior = { side = "Right", order = 20 },
+            Menu = { order = 10 },
+            Theme = { order = 20 },
+            General = { order = 30 },
+            Interface = { order = 10 },
+            Behavior = { order = 20 },
         },
         Server = {
-            Server = { side = "Left", order = 10 },
-            ["Map Vote"] = { side = "Left", order = 20 },
-            ["Job ID"] = { side = "Right", order = 10 },
-            ["Server Info"] = { side = "Right", order = 20 },
-            ["Auto Dupe"] = { side = "Right", order = 30 },
+            Server = { order = 10 },
+            ["Map Vote"] = { order = 20 },
+            ["Job ID"] = { order = 10 },
+            ["Server Info"] = { order = 20 },
+            ["Auto Dupe"] = { order = 30 },
         },
     },
     movementRows = {
@@ -161289,10 +161346,20 @@ return {
     pageModules = {
         Murderer = { "23" },
         Sheriff = { "24", "93" },
-        Visuals = { "7", "3795", "58" },
-        Player = { "81", "124", "14", "21", "112", "15", "34", "25", "93", "10690", "97" },
+        ESP = { "7", "58" },
+        World = { "3795" },
+        Weather = { "3795" },
+        Sky = { "3795" },
+        Effects = { "3795" },
+        Auras = { "3795" },
+        ["Weapon Skins"] = { "3795" },
+        Movement = { "81", "124", "14", "21", "112", "15", "34", "25" },
+        Player = { "93", "10690", "97" },
         Teleport = { "6830" },
-        Farm = { "1483", "12925", "16090", "14961", "11036", "10" },
+        Farm = { "1483", "11036", "10" },
+        Roles = { "16090" },
+        Crates = { "14961" },
+        Trade = { "12925" },
         Animations = { "6201" },
         Troll = { "10690", "7748", "77" },
         Mobile = { "36" },
@@ -161970,19 +162037,7 @@ local function createRecoveredBootstrap()
             oldCallbacksStopped = false,
             oldGuisRemoved = 0,
         }
-        if
-            type(previous) == "table"
-            and (
-                previous.Build == "native-mini-1"
-                or previous.Build == "native-mini-2"
-                or previous.Build == "native-mini-3"
-                or previous.Build == "native-reference-2"
-                or previous.Build == "native-ui-fixed-3"
-                or previous.Build == "native-ingame-4"
-                or previous.Build == "native-qwern-5"
-                or previous.Build == "native-source-restored-1"
-            )
-        then
+        if type(previous) == "table" then
             if type(previous.Unload) == "function" then
                 pcall(previous.Unload)
             end
@@ -162024,6 +162079,7 @@ local function createRecoveredBootstrap()
             rememberParent(playerGui)
         end
         local retiredNames = {
+            Vxlcr0wAutoFarm = true,
             PulseMini = true,
             PulseMiniNativeHost = true,
             PulseMini2 = true,
@@ -162032,11 +162088,33 @@ local function createRecoveredBootstrap()
             PulseHubRecovered = true,
             PulseHubReference = true,
             QwernSourceDeobf = true,
+            PulseHub = true,
+            ["Pulse Hub"] = true,
+            PulseHubUI = true,
+            PulseHubMain = true,
+            PulseESP2 = true,
+            PulseESP2Text = true,
         }
+        local retiredRoots = { "pulsehub", "pulsemini", "pulserestored", "vxlcr0w", "qwern" }
+        local function isRetired(gui)
+            if not gui:IsA("ScreenGui") then
+                return false
+            end
+            if retiredNames[gui.Name] then
+                return true
+            end
+            local compact = string.lower(gui.Name):gsub("%s+", "")
+            for _, root in ipairs(retiredRoots) do
+                if string.find(compact, root, 1, true) then
+                    return true
+                end
+            end
+            return false
+        end
         for _, parent in ipairs(guiParents) do
             pcall(function()
                 for _, gui in ipairs(parent:GetChildren()) do
-                    if gui:IsA("ScreenGui") and retiredNames[gui.Name] then
+                    if isRetired(gui) then
                         gui:Destroy()
                         replacement.oldGuisRemoved += 1
                     end
@@ -162065,6 +162143,8 @@ local function createRecoveredBootstrap()
             SourceManifest = manifest,
             LiveGameplayVerified = false,
         }
+        env.PulseRestored = M
+        env.QwernSourceDeobf = M
         local owner = "Bootstrap"
         local oldGlobals = {}
         local function log(message, kind, name)
@@ -162706,13 +162786,15 @@ local function createRecoveredBootstrap()
             local target = canonicalPage(name)
             local label = referenceLayout.titleAliases[title] or title
             if name == "ESP" then
-                target, sub = "Visuals", "ESP"
-            elseif name == "Auto Farm" or name == "Trade" then
+                target, sub = "ESP", nil
+            elseif name == "Auto Farm" then
                 target, sub = "Farm", "Coin"
+            elseif name == "Trade" then
+                target, sub = "Trade", nil
             elseif name == "Roles" then
-                target, sub = "Farm", "Role"
+                target, sub = "Roles", nil
             elseif name == "Crates" then
-                target, sub = "Farm", "Boxes"
+                target, sub = "Crates", nil
             elseif name == "Farm Webhook" then
                 target, sub = "Farm", "Webhook"
             elseif name == "Movement" then
@@ -162737,15 +162819,14 @@ local function createRecoveredBootstrap()
             elseif name == "Fling Players" or name == "Fling" then
                 target, sub = "Troll", "Fling"
             elseif name == "Visuals" then
-                local visualSubs = {
+                local visualTabs = {
                     Shaders = "World",
                     Weather = "Weather",
                     SkyFX = "Sky",
                     Random = "Effects",
-                    WSkins = "Skins",
-                    Auras = "Auras",
                 }
-                sub = visualSubs[sub] or sub or "ESP"
+                -- every visual group is its own sidebar tab now, so no sub pill is needed
+                target, sub = visualTabs[sub] or "ESP", nil
                 if title == "Optimizer" or title == "Performance" then
                     target, sub = "Settings", "Performance"
                 end
@@ -162758,14 +162839,20 @@ local function createRecoveredBootstrap()
             end
             return target, sub, label
         end
+        local activeGroup
         for _, definition in ipairs(referenceLayout.tabs) do
+            local groupKey = referenceLayout.sidebarGroups[definition.name]
+            if groupKey and groupKey ~= activeGroup then
+                window:TabGroup(groupKey)
+                activeGroup = groupKey
+            end
             local target = nova
                 and window:Tab({
                     Name = definition.name,
                     Title = definition.name,
                     Desc = definition.desc,
                     Icon = definition.icon,
-                    Columns = definition.columns or 2,
+                    Columns = definition.columns or 3,
                 })
             assert(target, "Cannot create original reference tab: " .. definition.name)
             shared.NovaTabs[definition.name] = target
@@ -162833,7 +162920,12 @@ local function createRecoveredBootstrap()
                 return pages[name]
             end
             local page = adapt(self, name, icon or tabIcons[canonicalPage(name)] or "circle")
-            assert(page and page.Native, "Cannot create real UI page: " .. tostring(name))
+            assert(page, "Cannot create UI page: " .. tostring(name))
+            if not page.Native then
+                -- the resolved sidebar tab was retired (Music): hand back the stub page
+                pages[name] = page
+                return page
+            end
             for _, kind in ipairs({
                 "Toggle",
                 "ToggleKey",
