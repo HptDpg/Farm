@@ -65524,6 +65524,45 @@ local function createNativeLibrary()
                 end
                 return nil
             end
+            local retiredCards = {
+                ["ESP/Auras"] = true,
+                ["ESP/Weapon Skins"] = true,
+                ["ESP/Skin Catalog"] = true,
+                ["World/Shader Packs"] = true,
+                ["Weather/Scenes"] = true,
+                ["Music/Music Player"] = true,
+                ["Music/My Songs"] = true,
+            }
+            local closingCards = {
+                ["ESP/Chams"] = true,
+                ["ESP/Font"] = true,
+                ["ESP/Extras"] = true,
+                ["ESP/Look"] = true,
+                ["World/Lighting"] = true,
+                ["Server/Map Priority"] = true,
+                ["Server/Map Vote"] = true,
+                ["Effects/Kill Effects"] = true,
+                ["Effects/Custom Cursor"] = true,
+                ["Troll/Troll"] = true,
+                ["Mobile/HUD"] = true,
+            }
+            local function hideRetiredCard(card)
+                if type(card) == "table" and card.SetVisible ~= nil then
+                    pcall(card.SetVisible, card, false)
+                end
+            end
+            local function closeRetiredCard(card)
+                if type(card) == "table" and card.SetCollapsed ~= nil then
+                    pcall(card.SetCollapsed, card, true, true)
+                end
+            end
+            local function applyCardMode(card, key)
+                if retiredCards[key] then
+                    hideRetiredCard(card)
+                elseif closingCards[key] then
+                    closeRetiredCard(card)
+                end
+            end
             local function callback9(calculatedValue3, argument, argument7)
                 if entries3 then
                     entries3.detached = true
@@ -65571,6 +65610,7 @@ local function createNativeLibrary()
                 sectionResult._pulseText = pulseText
                 sectionResult._pulseTarget = novaResolveResult .. "/" .. tostring(sub)
                 section = sectionResult
+                applyCardMode(sectionResult, novaResolveResult .. "/" .. pulseText)
                 return sectionResult
             end
             local function isActive2()
@@ -65818,6 +65858,8 @@ local function createNativeLibrary()
                     end
                 end)
                 callback7(argument.TitleLabel, pulseText)
+                local retiredTab = string.match(argument._pulseTarget or "", "^[^/]+") or ""
+                applyCardMode(argument, retiredTab .. "/" .. pulseText)
                 return true
             end
             entries.Header = function(calculatedValue3, argument, argument2)
@@ -93976,12 +94018,43 @@ local function createNativeLibrary()
                     end
                     return nil
                 end
+                pulseRejoin.source = function()
+                    local ok, value = pcall(function()
+                        return rawget(getgenv(), "PulseHubSource")
+                    end)
+                    if not ok then
+                        ok, value = pcall(function()
+                            return rawget(_G, "PulseHubSource")
+                        end)
+                    end
+                    if type(value) == "string" then
+                        value = value:gsub("^%s+", ""):gsub("%s+$", "")
+                        if value ~= "" then
+                            return value
+                        end
+                    end
+                    return "https://raw.githubusercontent.com/HptDpg/Farm/main/farmer.lua"
+                end
+                pulseRejoin.runLine = function()
+                    local source = pulseRejoin.source()
+                    if source == nil then
+                        return nil
+                    end
+                    if string.match(source, "^https?://") ~= nil then
+                        return string.format("loadstring(game:HttpGet(%q))()", source)
+                    end
+                    return string.format("loadstring(readfile(%q))()", source)
+                end
                 pulseRejoin.queue = function()
                     local calculatedValue = syn and syn.queue_on_teleport
                         or queue_on_teleport
                         or queueonteleport
                         or fluxus and fluxus.queue_on_teleport
                     if type(calculatedValue) ~= "function" then
+                        return false
+                    end
+                    local runLine = pulseRejoin.runLine()
+                    if runLine == nil then
                         return false
                     end
                     local keyResult = pulseRejoin.key()
@@ -93997,12 +94070,8 @@ local function createNativeLibrary()
                                     )
                                     else ""
                             )
-                                .. "if not game:IsLoaded() then game.Loaded:Wait() end\ntask.wait(1)\nif getgenv().PulseMM2HubState then return end\nloadstring(game:HttpGet("
-                                .. string.format(
-                                    "%q",
-                                    "https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"
-                                )
-                                .. "))()"
+                                .. "if not game:IsLoaded() then game.Loaded:Wait() end\ntask.wait(1)\nif getgenv().PulseMM2HubState then return end\n"
+                                .. runLine
                         )
                     )
                 end
@@ -162097,6 +162166,7 @@ referenceLayout.brand = {
 local function createRecoveredBootstrap()
     return function(native, manifest, referenceLayout)
         local env = type(getgenv) == "function" and getgenv() or _G
+        env.PulseMM2HubState = true
         assert(type(referenceLayout) == "table" and type(referenceLayout.tabs) == "table", "Reference layout is missing")
         local visualPreset = referenceLayout.visualPreset
         local options = type(env.PulseRestoredOptions) == "table" and env.PulseRestoredOptions or {}
@@ -162474,12 +162544,32 @@ local function createRecoveredBootstrap()
         end
         local savedValues, activeValues, setters, initialValues = {}, {}, {}, {}
         local configApi = { applyHooks = prefs.applyHooks }
+        local function animationsHandle()
+            local faEnv = getgenv and getgenv() or nil
+            return faEnv and faEnv.__pulseFA or nil
+        end
+        local function applyAnimations(data)
+            if type(data) ~= "table" then
+                return false
+            end
+            local fa = animationsHandle()
+            if fa == nil or fa.applyConfig == nil then
+                return false
+            end
+            guard(fa.applyConfig, "Animation appearance")(deserialize(data))
+            return true
+        end
         configApi.snapshot = function()
             local uiValues = deepCopy(activeValues)
             for key, value in pairs(savedValues) do
                 uiValues[key] = value
             end
-            return { v = 1, game = "mm2", s = serial(cfg), u = serial(uiValues) }
+            local data = serial(cfg)
+            local fa = animationsHandle()
+            if fa ~= nil and type(fa.config) == "table" then
+                data.anims = serial(fa.config)
+            end
+            return { v = 1, game = "mm2", s = data, u = serial(uiValues) }
         end
         -- Feature controls and apply-hooks only exist once that feature's page has
         -- been built, and pages are built lazily the first time their tab is opened.
@@ -162530,6 +162620,7 @@ local function createRecoveredBootstrap()
             end
             prefs.applying = true
             local ok, reason = pcall(function()
+                local anims = type(data.s.anims) == "table" and data.s.anims or nil
                 merge(cfg, deserialize(data.s))
                 local values = type(data.u) == "table" and deserialize(data.u) or nil
                 if data.reset == true then
@@ -162545,6 +162636,19 @@ local function createRecoveredBootstrap()
                     end
                 end
                 runApplyHooks()
+                if anims ~= nil then
+                    local attempt = 0
+                    local function pushAnimations()
+                        attempt += 1
+                        if applyAnimations(anims) then
+                            return
+                        end
+                        if attempt < 4 and M.Alive then
+                            task.delay(0.5, pushAnimations)
+                        end
+                    end
+                    pushAnimations()
+                end
             end)
             prefs.applying = false
             if not ok then
@@ -163984,6 +164088,7 @@ local function createRecoveredBootstrap()
             if env.QwernSourceDeobf == M then
                 env.QwernSourceDeobf = nil
             end
+            env.PulseMM2HubState = nil
         end
         env.PulseRestored = M
         env.QwernSourceDeobf = M
